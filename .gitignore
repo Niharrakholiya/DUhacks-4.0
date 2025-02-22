@@ -1,0 +1,43 @@
+# Node.js modules
+node_modules/
+
+# Build files
+dist/
+build/
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.production
+
+# Logs
+*.log
+*.log.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Editor related
+.idea/
+.vscode/
+*.swp
+*.swo
+*.iml
+/venv
+# Dependency directories
+jspm_packages/
+bower_components/
+
+# Temporary files
+*~
+\#*
+.\#*
+*.tmp
+
+Dockerfile
+.dockerignore
