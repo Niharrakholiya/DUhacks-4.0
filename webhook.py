@@ -24,19 +24,19 @@ def subscribe(request: Request):
 
     if verify_token == WHATSAPP_HOOK_TOKEN:
         return int(challenge) if challenge else "No challenge found"
-    
+
     return {"error": "Authentication failed. Invalid Token."}
 
 
 @app.post("/webhook/")
 async def callback(request: Request):
     print("callback is being called")
-    whatsapp_client = WhatsAppWrapper()  # Use the correct class
+    whatsapp_client = WhatsAppWrapper()
     data = await request.json()
     print("We received:", data)
 
     response = whatsapp_client.process_notification(data)
-    
+
     if response["statusCode"] == 200 and response["body"] and response["from_no"]:
         reply = response["body"]
         print("\nReply is:", reply)
