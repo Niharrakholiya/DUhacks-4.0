@@ -38,6 +38,3 @@ bower_components/
 \#*
 .\#*
 *.tmp
-
-Dockerfile
-.dockerignore
