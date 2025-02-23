@@ -115,6 +115,7 @@ class WhatsAppWrapper:
         message_body = message["text"]["body"]
         print(f"Received text message: {message_body}")
         res=chat_without_memory(message_body)
+        # save_speech_to_file(res,voice_id=1, rate=150)
         return {
             "statusCode": 200,
             "body": res,
