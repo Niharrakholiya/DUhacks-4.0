@@ -53,6 +53,30 @@ In India, millions lack access to basic healthcare guidance. Many hesitate to se
 - **ArogyaSetu**: ✅ Remembers past interactions
 - **Impact**: More personalized health guidance
 
+## 🔄 Feature Comparison
+
+| Feature | Meta AI | आरोग्य सेतु (ArogyaSetu) |
+|---------|---------|------------------------|
+| **Voice Messages** | ❌ No support for voice inputs | ✅ Full voice message processing with Indian accent support |
+| **Medical Context** | ❌ Generic responses | ✅ Specialized medical knowledge base |
+| **Privacy** | ⚠️ General data policies | ✅ HIPAA-compliant, medical-grade security |
+| **Response Format** | ❌ Text-only responses | ✅ Structured medical advice with causes, remedies & precautions |
+| **Local Context** | ❌ Global generic responses | ✅ India-specific medical guidance |
+| **History Tracking** | ❌ No medical history | ✅ Maintains symptom & interaction history |
+| **Emergency Handling** | ❌ No emergency protocols | ✅ Emergency detection & escalation |
+| **Medication Info** | ⚠️ Limited information | ✅ Common medicine suggestions with dosage |
+| **Follow-up Questions** | ❌ Single response only | ✅ Interactive follow-up for better diagnosis |
+| **Integration** | ❌ Standalone chatbot | ✅ Future doctor & pharmacy integrations |
+| **Cost** | 💰 Subscription based | 🆓 Free for basic healthcare |
+| **Availability** | ⚠️ Region restricted | ✅ Available across India |
+
+Legend:
+- ✅ Full Support
+- ⚠️ Partial/Limited
+- ❌ Not Available
+- 💰 Paid
+- 🆓 Free
+
 ## 🚀 Key Features
 
 1. **Voice-First Interaction**
