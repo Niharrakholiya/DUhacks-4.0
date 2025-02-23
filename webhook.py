@@ -6,10 +6,12 @@ from typing import Optional, Dict, Any
 from datetime import datetime
 
 from app.whatsapp_client import WhatsAppWrapper
-from database import *
+
 from database import update_acknowledgment
 from database import get_unacknowledged_messages
 from database import store_user_interaction
+from database import get_a_specific_userdata
+from database import update_user_interaction
 app = FastAPI()
 WHATSAPP_HOOK_TOKEN = os.environ.get("WHATSAPP_HOOK_TOKEN")
 
@@ -97,6 +99,7 @@ async def callback(request: Request):
     whatsapp_client = WhatsAppWrapper()
     data = await request.json()
     print("\n\n\n\n")
+
     print("Received webhook data:", json.dumps(data, indent=2))
     print("\n\n\n\n")
     message_info = safe_get_message_info(data)
@@ -111,7 +114,12 @@ async def callback(request: Request):
 
     # Handle incoming messages
     elif message_info['type'] == 'message':
+
         phone_number = message_info['from_number']
+        print("\n\n\n")
+        print("a specific users data")
+        print(get_a_specific_userdata(phone_number))
+        print("\n\n\n")
         query = message_info['text']
         message_id = message_info['message_id']  # Get message_id from the payload
 
@@ -127,9 +135,10 @@ async def callback(request: Request):
         # Process new message
         response = whatsapp_client.process_notification(data)
 
+
         if response["statusCode"] == 200 and response["body"] and response["from_no"]:
             reply = response["body"]
-        
+
             # Store interaction in database with message_id
             stored_id = store_user_interaction(
                 phone_number=phone_number,
@@ -138,6 +147,10 @@ async def callback(request: Request):
                 message_id=message_id,  # Pass the message_id here
                 embedding=None
             )
+
+            if "update_it" in response:
+              # def update_user_interaction(phone_number, query, response, message_id, embedding=None)
+               update_user_interaction(phone_number,response["file_path"],reply,message_id,None)
 
             if stored_id:
                 # Send response

@@ -135,6 +135,28 @@ def get_unacknowledged_messages(phone_number):
         ]
     finally:
         conn.close()
-
+def get_a_specific_userdata(phone_number):
+    conn = sqlite3.connect('user_data.db')
+    c = conn.cursor()
+    try:
+        c.execute('''
+            SELECT id, phone_number, query, response, timestamp
+            FROM users
+            WHERE phone_number = ? 
+            ORDER BY timestamp DESC
+        ''', (phone_number,))
+        results = c.fetchall()
+        return [
+            {
+                'id': row[0],
+                'phone_number': row[1],
+                'query': row[2],
+                'response': row[3],
+                'timestamp': row[4]
+            }
+            for row in results
+        ]
+    finally:
+        conn.close()
 if __name__ == "__main__":
     init_db()
