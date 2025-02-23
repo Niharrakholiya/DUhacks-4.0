@@ -1,8 +1,11 @@
 import os
 import requests
 import json
-from dotenv import load_dotenv
+import mimetypes
 from datetime import datetime
+from pathlib import Path
+import logging
+from dotenv import load_dotenv
 load_dotenv()
 
 
@@ -72,7 +75,8 @@ class WhatsAppWrapper:
             return False
 
     def process_notification(self, data):
-        """Processes incoming WhatsApp notifications and handles text, audio, and image messages."""
+        """Enhanced notification processing for all media types"""
+        print(f"We received: {data}")
         entries = data["entry"]
         for entry in entries:
             for change in entry["changes"]:
@@ -82,41 +86,11 @@ class WhatsAppWrapper:
                         message_type = message["type"]
                         from_no = message["from"]
 
-                        # Handle text messages
+                        # Handle different message types
                         if message_type == "text":
-                            message_body = message["text"]["body"]
-                            print(f"Ack from FastAPI-WtsApp Webhook: {message_body}")
-                            return {
-                                "statusCode": 200,
-                                "body": message_body,
-                                "from_no": from_no,
-                                "isBase64Encoded": False
-                            }
-
-                        # Handle audio messages
-                        elif message_type == "audio":
-                            media_id = message["audio"]["id"]
-                            file_path = self.download_media(media_id, "audio", from_no)
-                            if file_path:
-                                print(f"Successfully downloaded audio to: {file_path}")
-                                # Echo the audio back
-                                if self.send_whatsapp_audio(file_path, from_no):
-                                    return {
-                                        "statusCode": 200,
-                                        "body": "Audio received and echoed back",
-                                        "from_no": from_no,
-                                        "isBase64Encoded": False
-                                    }
-                                else:
-                                    self.send_text_message("Failed to echo audio", from_no)
-                                    return {
-                                        "statusCode": 200,
-                                        "body": "Failed to echo audio",
-                                        "from_no": from_no,
-                                        "isBase64Encoded": False
-                                    }
-
-                        # [Rest of the message type handlers remain the same]
+                            return self._handle_text_message(message, from_no)
+                        elif message_type in ["image", "audio", "document", "video"]:
+                            return self._handle_media_message(message_type, message, from_no)
 
         return {
             "statusCode": 403,
@@ -124,76 +98,175 @@ class WhatsAppWrapper:
             "isBase64Encoded": False
         }
 
-    # [Rest of the methods remain the same]
+    def _handle_text_message(self, message, from_no):
+        """Handle text messages"""
+        message_body = message["text"]["body"]
+        print(f"Received text message: {message_body}")
+        return {
+            "statusCode": 200,
+            "body": message_body,
+            "from_no": from_no,
+            "isBase64Encoded": False
+        }
+
+    def _handle_media_message(self, message_type, message, from_no):
+        """Handle all media type messages"""
+        try:
+            media_info = message.get(message_type, {})
+            media_id = media_info.get("id")
+            mime_type = media_info.get("mime_type")
+
+            print(f"Processing {message_type} with ID: {media_id}, MIME: {mime_type}")
+
+            file_path = self.download_media(
+                media_id=media_id,
+                media_type=message_type,
+                phone_number=from_no,
+                mime_type=mime_type
+            )
+
+            if file_path:
+                # Send appropriate confirmation message
+                media_type_msg = {
+                    "image": "Image",
+                    "audio": "Voice message",
+                    "document": "Document",
+                    "video": "Video"
+                }.get(message_type, "File")
+
+                self.send_text_message(f"{media_type_msg} received and saved!", from_no)
+                return {
+                    "statusCode": 200,
+                    "body": f"{media_type_msg} received and saved",
+                    "from_no": from_no,
+                    "file_path": file_path,
+                    "isBase64Encoded": False
+                }
+            else:
+                error_msg = f"Failed to process {message_type}"
+                self.send_text_message(f"Sorry, {error_msg}", from_no)
+                return {
+                    "statusCode": 500,
+                    "body": error_msg,
+                    "from_no": from_no,
+                    "isBase64Encoded": False
+                }
+
+        except Exception as e:
+            error_msg = f"Error processing {message_type}: {str(e)}"
+            print(error_msg)
+            self.send_text_message(f"Sorry, failed to process your {message_type}", from_no)
+            return {
+                "statusCode": 500,
+                "body": error_msg,
+                "from_no": from_no,
+                "isBase64Encoded": False
+            }
+
     def get_extension_from_mime(self, mime_type):
-        """Get file extension from MIME type."""
+        """Enhanced MIME type detection with fixed audio handling"""
+        # First try mimetypes
         extension = mimetypes.guess_extension(mime_type)
         if extension:
             return extension.lstrip('.')
 
-        # Fallback mapping for common types
+        # Enhanced MIME type mapping with OGG as default audio format
         mime_map = {
             'application/pdf': 'pdf',
             'image/jpeg': 'jpg',
             'image/png': 'png',
+            'image/webp': 'webp',
+            'image/gif': 'gif',
             'audio/ogg': 'ogg',
-            'audio/mpeg': 'mp3',
-            'audio/wav': 'wav',
+            'audio/opus': 'ogg',  # WhatsApp voice messages often use opus codec
+            'audio/mpeg': 'ogg',  # Convert to ogg for consistency
+            'audio/mp3': 'ogg',   # Convert to ogg for consistency
+            'audio/wav': 'ogg',   # Convert to ogg for consistency
+            'audio/aac': 'ogg',   # Convert to ogg for consistency
+            'video/mp4': 'mp4',
+            'video/3gpp': '3gp',
             'application/msword': 'doc',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx'
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+            'application/vnd.ms-excel': 'xls',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+            'application/vnd.ms-powerpoint': 'ppt',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx',
+            'text/plain': 'txt',
+            'application/zip': 'zip',
+            'application/x-rar-compressed': 'rar'
         }
+
+        # Type-specific fallbacks - Updated for WhatsApp audio
+        if mime_type:
+            if mime_type.startswith('audio/'):
+                return 'ogg'  # Always default to ogg for audio
+            elif mime_type.startswith('image/'):
+                return 'jpg'
+            elif mime_type.startswith('video/'):
+                return 'mp4'
+            elif mime_type.startswith('application/'):
+                return 'pdf'
+
         return mime_map.get(mime_type, 'bin')
 
     def download_media(self, media_id, media_type, phone_number, mime_type=None, filename=None):
-        """Downloads media from WhatsApp Cloud API and saves it locally."""
-        print(f"Downloading media ID: {media_id}, type: {media_type}, mime_type: {mime_type}")
+        """Enhanced media download with better logging"""
+        print(f"Starting download for media ID: {media_id}, type: {media_type}, mime: {mime_type}")
 
+        # Step 1: Get media URL
         media_url = f"https://graph.facebook.com/v21.0/{media_id}"
-        response = requests.get(media_url, headers=self.headers)
-        print(f"Media URL response: {response.status_code}")
+        try:
+            response = requests.get(media_url, headers=self.headers)
+            print(f"Media URL fetch response: {response.status_code}")
 
-        if response.status_code == 200:
+            if response.status_code != 200:
+                print(f"Error response: {response.text}")
+                return None
+
             url = response.json().get("url")
-            print(f"Media download URL: {url}")
-            if url:
-                media_response = requests.get(url, headers=self.headers)
-                print(f"Media download response: {media_response.status_code}")
-                if media_response.status_code == 200:
-                    os.makedirs("media", exist_ok=True)
-                    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+            if not url:
+                print("No URL in response")
+                return None
 
-                    # Determine file extension
-                    if mime_type:
-                        extension = self.get_extension_from_mime(mime_type)
-                    elif media_type == "image":
-                        extension = "jpg"
-                    elif media_type == "audio":
-                        extension = "ogg"
-                    else:
-                        extension = "bin"
+            print(f"Got download URL for media")
 
-                    # Use original filename if provided, otherwise generate one
-                    if filename:
-                        # Keep original extension if present in filename
-                        base_name = os.path.splitext(filename)[0]
-                        final_filename = f"media/{phone_number}_{timestamp}_{base_name}.{extension}"
-                    else:
-                        final_filename = f"media/{phone_number}_{timestamp}.{extension}"
+            # Step 2: Download media content
+            media_response = requests.get(url, headers=self.headers)
+            if media_response.status_code != 200:
+                print(f"Failed to download media: {media_response.status_code}")
+                return None
 
-                    with open(final_filename, "wb") as f:
-                        f.write(media_response.content)
-                    print(f"Media saved to: {final_filename}")
-                    return final_filename
-                else:
-                    print(f"Failed to download media content: {media_response.status_code}")
+            # Step 3: Determine extension
+            if not mime_type:
+                type_to_ext = {
+                    "image": "jpg",
+                    "audio": "ogg",
+                    "video": "mp4",
+                    "document": "pdf"
+                }
+                extension = type_to_ext.get(media_type, "bin")
             else:
-                print("No URL found in media response")
-        else:
-            print(f"Failed to get media URL: {response.status_code}")
-        return None
+                extension = self.get_extension_from_mime(mime_type)
 
+            # Step 4: Create filename
+            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+            if filename:
+                base_name = os.path.splitext(filename)[0]
+                final_filename = f"media/{phone_number}_{timestamp}_{base_name}.{extension}"
+            else:
+                final_filename = f"media/{phone_number}_{timestamp}.{extension}"
 
-    # [Rest of the methods remain the same]
+            # Step 5: Save file
+            os.makedirs("media", exist_ok=True)
+            with open(final_filename, "wb") as f:
+                f.write(media_response.content)
+            print(f"Successfully saved media to: {final_filename}")
+            return final_filename
+
+        except Exception as e:
+            print(f"Error in download_media: {str(e)}")
+            return None
+
     def send_template_message(self, template_name, language_code, phone_number):
 
         payload = {

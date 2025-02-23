@@ -40,4 +40,23 @@ bower_components/
 *.tmp
 
 app/__pycache__
+
+# Media files and directories
 media/
+media/*
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.mp4
+*.ogg
+*.pdf
+*.doc
+*.docx
+*.mp3
+*.wav
+*.webp
+*.3gp
+
+# Fix typo in existing ignore
+meadia/
