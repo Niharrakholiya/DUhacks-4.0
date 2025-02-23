@@ -2,7 +2,7 @@
 
 
 
-## 🏆 Hackathon Winner DUHacks 4.0 - Best Healthcare Innovation
+## 🏆 Hackathon DUHacks 4.0 - Best Healthcare Innovation
 
 > "Transforming healthcare access through WhatsApp - because health guidance should be just a message away."
 
