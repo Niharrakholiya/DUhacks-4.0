@@ -7,6 +7,7 @@ from pathlib import Path
 
 from .exceptions import WhatsAppError, MediaUploadError, MediaDownloadError
 from .models.messages import MessageResponse
+from .models.config import WhatsAppConfig  # Add this import
 
 logger = logging.getLogger(__name__)
 

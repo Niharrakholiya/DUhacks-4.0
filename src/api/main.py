@@ -4,7 +4,8 @@ import os
 from dotenv import load_dotenv
 import logging
 
-from whatsapp_sdk import WhatsAppClient, WhatsAppConfig, WhatsAppError
+from src.whatsapp_sdk.client import WhatsAppClient, WhatsAppError
+from examples.send_message import WhatsAppConfig
 
 # Initialize logging
 logging.basicConfig(level=logging.INFO)
