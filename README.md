@@ -1,8 +1,8 @@
-# स्वास्थ्यसेतु (SwasthyaSetu) - AI-Powered Healthcare Companion 🏥
+# आरोग्य सेतु (ArogyaSetu) - AI-Powered Healthcare Companion 🏥
 
 
 
-## 🏆 Hackathon DUHacks 4.0 - Best Healthcare Innovation
+## 🏆 Hackathon Winner DUHacks 4.0 - Best Healthcare Innovation
 
 > "Transforming healthcare access through WhatsApp - because health guidance should be just a message away."
 
@@ -17,7 +17,7 @@ In India, millions lack access to basic healthcare guidance. Many hesitate to se
 
 ## 🌟 Our Solution
 
-स्वास्थ्यसेतु (SwasthyaSetu) is a revolutionary WhatsApp-based healthcare companion that:
+आरोग्य सेतु (ArogyaSetu) is a revolutionary WhatsApp-based healthcare companion that:
 - Provides instant medical guidance in multiple Indian languages
 - Understands voice messages for those who can't type
 - Uses advanced AI to offer personalized health insights
@@ -53,7 +53,7 @@ In India, millions lack access to basic healthcare guidance. Many hesitate to se
 
 ## 📱 How It Works
 
-1. **Add SwasthyaSetu on WhatsApp**: +91-XXXXXXXXXX
+1. **Add ArogyaSetu on WhatsApp**: +91-XXXXXXXXXX
 2. **Share Your Symptoms**:
    - Send a text message OR
    - Record a voice note
@@ -106,7 +106,7 @@ cp .env.example .env
 uvicorn webhook:app --reload
 ```
 
-## 🤝 Team IndustryInnovators
+## 🤝 Team IndustryInnovators - आरोग्य सेतु
 
 - **Nihar Rakholiya** - AI/ML Lead
 - **Lakhman Parmar** - WhatsApp Integration Lead
