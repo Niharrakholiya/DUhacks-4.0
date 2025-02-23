@@ -2,7 +2,7 @@
 
 
 
-## 🏆 Hackathon Winner DUHacks 4.0 - Best Healthcare Innovation
+## 🏆  DUHacks 4.0 Hackthon- Best Healthcare Innovation
 
 > "Transforming healthcare access through WhatsApp - because health guidance should be just a message away."
 
@@ -50,6 +50,62 @@ In India, millions lack access to basic healthcare guidance. Many hesitate to se
 - **Infrastructure**: Docker, SQLite
 - **API**: WhatsApp Cloud API
 - **Security**: JWT, End-to-end encryption
+
+## 🔄 System Architecture
+
+```mermaid
+graph TD
+    A[User] -->|WhatsApp Message| B[WhatsApp Cloud API]
+    B -->|Webhook| C[FastAPI Backend]
+    C -->|Voice| D[Whisper ASR]
+    C -->|Text| E[LLM Engine]
+    D -->|Transcription| E
+    E -->|Query| F[(ChromaDB)]
+    F -->|Context| E
+    E -->|Response| C
+    C -->|Message| B
+    B -->|Reply| A
+```
+
+## 🧠 AI Pipeline
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant W as WhatsApp
+    participant B as Backend
+    participant ASR as Whisper ASR
+    participant AI as LLM Engine
+    participant DB as ChromaDB
+
+    U->>W: Send Voice/Text
+    W->>B: Forward Message
+    alt is voice message
+        B->>ASR: Convert to Text
+        ASR-->>B: Transcription
+    end
+    B->>AI: Process Query
+    AI->>DB: Get Context
+    DB-->>AI: Past Interactions
+    AI-->>B: Medical Response
+    B->>W: Format Response
+    W->>U: Display Result
+```
+
+## 📊 Data Flow
+
+```mermaid
+flowchart LR
+    A[Input] --> B{Type?}
+    B -->|Voice| C[ASR Processing]
+    B -->|Text| D[Text Processing]
+    C --> E[Medical Analysis]
+    D --> E
+    E --> F[Context Lookup]
+    F --> G[Response Generation]
+    G --> H[Message Formatting]
+    H --> I[User Response]
+```
 
 ## 📱 How It Works
 
@@ -105,6 +161,34 @@ cp .env.example .env
 # Run the application
 uvicorn webhook:app --reload
 ```
+
+### 🔗 Setting Up WhatsApp Webhook
+
+1. **Create Meta App**:
+   - Visit [Meta Developers Portal](https://developers.facebook.com/)
+   - Create new app & select WhatsApp API
+   - Get your WhatsApp API Token & Phone Number ID
+
+2. **Configure Webhook**:
+   ```bash
+   # Your webhook URL will be:
+   https://your-domain.com/webhook/
+
+   # Local Testing with Ngrok:
+   ngrok http 8000
+   # Copy the HTTPS URL provided by ngrok
+   ```
+
+3. **Verify Webhook**:
+   - Use the ngrok URL in Meta Dashboard
+   - Set verify token (same as WHATSAPP_HOOK_TOKEN)
+   - Subscribe to messages webhook
+
+4. **Test Connection**:
+   ```bash
+   # Send a test message to your WhatsApp number
+   # You should receive an automated response
+   ```
 
 ## 🤝 Team IndustryInnovators - आरोग्य सेतु
 
