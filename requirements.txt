@@ -4,3 +4,10 @@ fastapi==0.115.8
 python-dotenv==1.0.1
 Requests==2.32.3
 uvicorn==0.34.0
+openai-whisper==20240930
+pydub==0.25.1
+chromadb==0.6.3
+google-generativeai==0.8.4
+python-dotenv==1.0.1
+#pysqlite3-binary==0.5.4
+ffmpeg==1.4

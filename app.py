@@ -1,12 +1,13 @@
 # Import pysqlite3 and replace sqlite3
-__import__('pysqlite3')
+import sqlite3
 import sys
-sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+
 
 import os
 import sys
 
-
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
 
 # Update the import to use the correct path
 from app.whatsapp_client import WhatsAppWrapper
@@ -19,10 +20,12 @@ import csv
 
 import chromadb
 import google.generativeai as genai
+import json
 import warnings
 import os
 from dotenv import load_dotenv
 
+from database import init_db, store_user_interaction, get_user_history, search_similar_queries
 
 # Load the Whisper model
 model = whisper.load_model("base")
@@ -37,6 +40,9 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # Configure Gemini AI
 genai.configure(api_key=GEMINI_API_KEY)
+
+# Initialize database at startup
+init_db()
 
 def transcribe_with_whisper(file_path):
     """Convert audio to text using Whisper."""
@@ -61,7 +67,7 @@ def save_transcription_to_csv(transcription, output_file="transcription.csv"):
 def store_in_vectordb(text, file_id):
     """Convert transcription to embedding and store in ChromaDB."""
     embedding = genai.embed_content(model="models/embedding-001", content=text)
-    
+
     collection.add(
         ids=[file_id],
         embeddings=[embedding["embedding"]],
@@ -71,75 +77,90 @@ def store_in_vectordb(text, file_id):
 def retrieve_past_context(user_query):
     """Retrieve similar past transcriptions from ChromaDB."""
     query_embedding = genai.embed_content(model="models/embedding-001", content=user_query)
-    
+
     results = collection.query(query_embeddings=[query_embedding["embedding"]], n_results=3)
     past_contexts = [r["text"] for r in results["metadatas"][0]] if results["metadatas"] else []
-    
+
     return past_contexts
 
 def get_followup_questions(user_query):
     """Ask necessary follow-up questions before diagnosis."""
     prompt = f"""
-    The user has described the following symptom: "{user_query}". 
-    
+    The user has described the following symptom: "{user_query}".
+
     Before providing possible causes, recommended medicines, and precautions, generate a list of **two to three** follow-up questions that will help in better diagnosis.
-    
+
     Example:
-    - If the user says "I have a headache", ask: 
+    - If the user says "I have a headache", ask:
       1. "Do you feel stressed or anxious?"
       2. "Do you have any sensitivity to light or noise?"
       3. "Have you had enough water today?"
 
     Now, generate follow-up questions for: "{user_query}"
     """
-    
+
     model = genai.GenerativeModel("gemini-pro")
     response = model.generate_content(prompt)
-    
+
     questions = response.text.strip().split("\n") if response else []
     return [q for q in questions if q.strip()]  # Return non-empty questions
 
-def chat_with_memory(user_query):
-    """Ask follow-up questions before generating a final medical response."""
-    past_contexts = retrieve_past_context(user_query)
+def chat_with_memory(user_query, phone_number="919574156941"):
+    """Modified chat function with database integration"""
+    # Get user's history
+    user_history = get_user_history(phone_number)
+
+    # Generate embedding for current query
+    query_embedding = genai.embed_content(
+        model="models/embedding-001",
+        content=user_query
+    )["embedding"]
 
     # Get follow-up questions
     followup_questions = get_followup_questions(user_query)
-    
+
     print("\nAI: Before I analyze your symptoms, I need to ask a few questions:")
     user_responses = {}
 
     for question in followup_questions:
-        answer = input(f"AI: {question} \nYou: ")  # Collect user response
+        answer = input(f"AI: {question} \nYou: ")
         user_responses[question] = answer
 
-    # Prepare final response prompt with additional details
-    additional_info = "\n".join([f"{q}: {a}" for q, a in user_responses.items()])
-    
+    # Include user history in prompt
+    history_context = "\n".join([
+        f"Previous Query: {h['query']}\nResponse: {h['response']}"
+        for h in user_history[:2]  # Only use last 2 interactions
+    ])
+
+    # Prepare final response prompt
     prompt = f"""
-    You are a highly knowledgeable virtual medical assistant. Based on the user’s symptoms and follow-up responses, analyze the situation and provide:
-    
-    1. **Possible Causes** - List potential reasons for the symptoms.
-    2. **Recommended Medicines** - Suggest common over-the-counter or prescribed medications for symptom relief.
-    3. **Precautions & Next Steps** - Advise on whether medical consultation is necessary and any home remedies.
+    Previous History:
+    {history_context}
 
-    Previous Medical Context (if available): {past_contexts}
+    Current Query: {user_query}
+    Follow-up Responses:
+    {json.dumps(user_responses, indent=2)}
 
-    **User Symptoms:** {user_query}
-    **Follow-Up Responses:** 
-    {additional_info}
-
-    **AI Response:**
+    Please provide medical advice considering the user's history and current symptoms.
     """
 
-    # Use Gemini-Pro to generate final response
+    # Generate response
     model = genai.GenerativeModel("gemini-pro")
     response = model.generate_content(prompt)
+    response_text = response.text if response else "I'm sorry, I couldn't generate a response."
 
-    return response.text if response else "I'm sorry, I couldn't generate a response."
+    # Store interaction in database
+    store_user_interaction(
+        phone_number=phone_number,
+        query=user_query,
+        response=response_text,
+        embedding=query_embedding
+    )
+
+    return response_text
 
 # ===== RUN TRANSCRIPTION & STORE IN VECTOR DB =====
-file_path = "media/919574156941_20250223090424.ogg"  # Replace with your file
+file_path = "media/919574156941_20250223114730.ogg"  # Replace with your file
 transcript = transcribe_with_whisper(file_path)
 print("\nTranscription:", transcript)
 
