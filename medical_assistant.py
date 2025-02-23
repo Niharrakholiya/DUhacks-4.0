@@ -128,4 +128,40 @@ def chat_with_memory(user_query):
 
     return response.text if response else "I'm sorry, I couldn't generate a response."
 
+def chat_without_memory(user_query):
+    """Generate a medical response without past context."""
+    prompt = f"""
+    You are स्वास्थ्यमित्र (Swasthya-Mitra), a caring virtual medical assistant. Based on the symptoms, provide a clear analysis:
 
+    🏥 *Medical Analysis for: "{user_query}"*
+
+    Please provide your response in this format:
+
+    🔍 *Possible Causes:*
+    • List 2-3 most likely causes
+    • Keep explanations brief and clear
+
+    💊 *Recommended Relief Measures:*
+    • Suggest safe over-the-counter medications
+    • Include dosage guidelines
+    • List natural home remedies
+
+    ⚠️ *Important Precautions:*
+    • Mention when to seek immediate medical help
+    • List key warning signs
+    • Provide lifestyle recommendations
+
+    Format the response with bullet points and emojis. Keep it concise and easy to read on WhatsApp.do not include '*'
+
+    User Symptoms: {user_query}
+
+    Response:
+    """
+
+    # ...existing code...
+
+    # Use Gemini-Pro to generate response
+    model = genai.GenerativeModel("gemini-pro")
+    response = model.generate_content(prompt)
+
+    return response.text if response else "I'm sorry, I couldn't generate a response."

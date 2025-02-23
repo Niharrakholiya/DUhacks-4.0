@@ -9,7 +9,7 @@ import logging
 from dotenv import load_dotenv
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # from database import update_user_interaction
-from medical_assistant import transcribe_with_whisper,chat_with_memory,store_in_vectordb,save_transcription_to_csv
+from medical_assistant import transcribe_with_whisper,chat_with_memory,store_in_vectordb,save_transcription_to_csv,chat_without_memory
 
 load_dotenv()
 
@@ -114,9 +114,10 @@ class WhatsAppWrapper:
         """Handle text messages"""
         message_body = message["text"]["body"]
         print(f"Received text message: {message_body}")
+        res=chat_without_memory(message_body)
         return {
             "statusCode": 200,
-            "body": message_body,
+            "body": res,
             "from_no": from_no,
             "isBase64Encoded": False
         }
@@ -140,7 +141,8 @@ class WhatsAppWrapper:
             if file_path:
 
 
-                # transcript = transcribe_with_whisper(file_path)
+                transcript = transcribe_with_whisper(file_path)
+                res=chat_without_memory(transcript)
                 # save_transcription_to_csv(transcript)
                 # store_in_vectordb(transcript, file_id=file_path)
                 # print("\nTranscription stored in VectorDB ✅")
@@ -149,7 +151,7 @@ class WhatsAppWrapper:
 
                 return {
                     "statusCode": 200,
-                    "body": "great",
+                    "body": res,
                     "file_path": file_path,
                     "from_no": from_no,
                     "isBase64Encoded": False,

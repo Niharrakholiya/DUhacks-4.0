@@ -116,10 +116,7 @@ async def callback(request: Request):
     elif message_info['type'] == 'message':
 
         phone_number = message_info['from_number']
-        print("\n\n\n")
-        print("a specific users data")
-        print(get_a_specific_userdata(phone_number))
-        print("\n\n\n")
+
         query = message_info['text']
         message_id = message_info['message_id']  # Get message_id from the payload
 
@@ -152,7 +149,7 @@ async def callback(request: Request):
               # def update_user_interaction(phone_number, query, response, message_id, embedding=None)
                update_user_interaction(phone_number,response["file_path"],reply,message_id,None)
 
-            if stored_id:
+            if stored_id :
                 # Send response
                 print(f"\nSending reply: {reply}")
                 whatsapp_client.send_text_message(
