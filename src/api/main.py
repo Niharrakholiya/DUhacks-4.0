@@ -49,5 +49,3 @@ async def verify_webhook(request: Request):
         raise HTTPException(status_code=400, detail="Invalid challenge value")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-# ...rest of the FastAPI implementation...
