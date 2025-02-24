@@ -18,7 +18,6 @@ In India, millions lack access to basic healthcare guidance. Many hesitate to se
 ## 🌟 Our Solution
 
 आरोग्य सेतु (ArogyaSetu) is a revolutionary WhatsApp-based healthcare companion that:
-- Provides instant medical guidance in multiple Indian languages
 - Understands voice messages for those who can't type
 - Uses advanced AI to offer personalized health insights
 - Maintains conversation history for better context
