@@ -3,15 +3,13 @@ import os
 import sys
 from fastapi import FastAPI, Request
 from typing import Optional, Dict, Any
-from datetime import datetime
+
 
 from app.whatsapp_client import WhatsAppWrapper
 
 from database import update_acknowledgment
 from database import get_unacknowledged_messages
-from database import store_user_interaction
-from database import get_a_specific_userdata
-from database import update_user_interaction
+
 app = FastAPI()
 WHATSAPP_HOOK_TOKEN = os.environ.get("WHATSAPP_HOOK_TOKEN")
 
@@ -98,21 +96,15 @@ async def callback(request: Request):
     print("callback is being called")
     whatsapp_client = WhatsAppWrapper()
     data = await request.json()
-    print("\n\n\n\n")
 
+    print("\n\n\n\n")
     print("Received webhook data:", json.dumps(data, indent=2))
     print("\n\n\n\n")
     message_info = safe_get_message_info(data)
     if not message_info:
         return {"status": "ignored", "reason": "Invalid payload structure"}
 
-    # Handle status updates
-    # if message_info['type'] == 'status':
-    #     if message_info['status'] in ['delivered', 'read']:
-    #         update_acknowledgment(message_info['message_id'])
-    #         return {"status": "success", "action": "status_updated"}
 
-    # Handle incoming messages
     elif message_info['type'] == 'message':
 
         phone_number = message_info['from_number']
@@ -120,53 +112,22 @@ async def callback(request: Request):
         query = message_info['text']
         message_id = message_info['message_id']  # Get message_id from the payload
 
-        # Check for unacknowledged messages first
-        # unack_messages = get_unacknowledged_messages(phone_number)
-        # if unack_messages:
-        #     print(f"Found {len(unack_messages)} unacknowledged messages")
-        #     retry_response = await retry_unacknowledged_messages(whatsapp_client, phone_number)
-        #     if retry_response:
-        #         return retry_response
-            # return {"status": "ignored", "reason": "Pending acknowledgments"}
+
 
         # Process new message
         response = whatsapp_client.process_notification(data)
 
 
         if response["statusCode"] == 200 and response["body"] and response["from_no"]:
+
             reply = response["body"]
-
-            # Store interaction in database with message_id
-            stored_id = store_user_interaction(
-                phone_number=phone_number,
-                query=query,
-                response=reply,
-                message_id=message_id,  # Pass the message_id here
-                embedding=None
-            )
-
-            if "update_it" in response:
-              # def update_user_interaction(phone_number, query, response, message_id, embedding=None)
-               update_user_interaction(phone_number,response["file_path"],reply,message_id,None)
-
-            if stored_id :
-                # Send response
-                print(f"\nSending reply: {reply}")
-                whatsapp_client.send_text_message(
+            print(f"\nSending reply: {reply}")
+            whatsapp_client.send_text_message(
                     message=reply,
                     phone_number=response["from_no"]
                 )
-                print(f"\nReply sent to WhatsApp Cloud: {response}")
+            print(f"\nReply sent to WhatsApp Cloud: {response}")
 
-                return {
-                    "status": "success",
-                    "action": "message_processed",
-                    "message_id": message_id
-                }
-            else:
-                return {
-                    "status": "ignored",
-                    "reason": "Message already processed"
-                }
 
-    return {"status": "success"}
+
+    return None

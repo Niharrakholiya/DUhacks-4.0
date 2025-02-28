@@ -142,7 +142,7 @@ def get_a_specific_userdata(phone_number):
         c.execute('''
             SELECT id, phone_number, query, response, timestamp
             FROM users
-            WHERE phone_number = ? 
+            WHERE phone_number = ?
             ORDER BY timestamp DESC
         ''', (phone_number,))
         results = c.fetchall()
