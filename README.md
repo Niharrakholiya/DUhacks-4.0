@@ -136,7 +136,7 @@ flowchart LR
 
 ## 📱 How It Works
 
-1. **Add ArogyaSetu on WhatsApp**: +91-XXXXXXXXXX
+1. **Add ArogyaSetu on WhatsApp**: +91-84013-72294
 2. **Share Your Symptoms**:
    - Send a text message OR
    - Record a voice note
